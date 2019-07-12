@@ -1,1 +1,0 @@
-hello, just to test whether the github username is connected correctly to my local git configuration.
