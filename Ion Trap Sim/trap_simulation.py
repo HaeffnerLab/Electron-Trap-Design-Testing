@@ -6,7 +6,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy import stats
 import time
 
-
 q = 1.60217662e-19 # coulombs
 #m = 9.10938356e-31 #kg (electron)
 m = 6.6359437706294e-26 #(calcium)
@@ -14,15 +13,14 @@ kB = 1.38064852e-23 # J/K
 f = 100.0e6 # Electrode frequency, in Hertz
 
 # loading E field (vector)
-data = np.loadtxt("Fusion3D_100MHz_50V_ion_oop_realExEy_smooth_small.fld", skiprows = 2)
+data = np.loadtxt("Fusion3D_100MHz_50V_ion_oop_realExEy_smooth.fld", skiprows = 2)
 # manipulating E field data
 df = pd.DataFrame(data, columns=['x', 'y', 'z', 'Ex', 'Ey', 'Ez'])
 x_max, x_min = df.x.max(), df.x.min()
 y_max, y_min = df.y.max(), df.y.min()
-# print(x_max, x_min, y_max, y_min)
-# print(df.y.nunique())
 Nx, Ny = df.x.nunique() - 1, df.y.nunique() - 1 # numbers of intervals that divide each dimension
 dx, dy = (x_max-x_min)/Nx, (y_max-y_min)/Ny # interval size
+
 def get_row_index(x, y):
     # given spatial coordinates x and y, 
     # output the index of the row corresponding to the coordinates
@@ -37,9 +35,6 @@ def get_row_index(x, y):
     i = int((x - x_min) / dx)
     j = int((y - y_min) / dy)
     return i * (Nx + 1) + j
-# n = get_row_index(-0.000381, 0.000275)
-# print(n)
-# print(df.iloc[n, :])
 
 def grad_Ex(x, y):
     # return the gradient of x component of electric field at position (x, y);
