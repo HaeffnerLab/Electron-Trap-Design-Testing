@@ -13,7 +13,7 @@ class trap:
 	kB = 1.38064852e-23 # J/K
 	f = 1.5e9 # Electrode frequency, in Hertz
 
-	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy, f=trap.f):
+	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy):
 		self.df = df
 		self.x_max = x_max
 		self.x_min = x_min
@@ -182,6 +182,7 @@ class quarter_trap(trap):
 		self.Ny = Ny
 		self.dx = dx
 		self.dy = dy
+		self.f = f
 
 	def get_row_index(self, x, y):
 	    # given spatial coordinates x and y, 
@@ -272,6 +273,7 @@ class half_trap(trap):
 		self.Ny = Ny
 		self.dx = dx
 		self.dy = dy
+		self.f = f
 
 	def get_row_index(self, x, y):
 	    # given spatial coordinates x and y, 
@@ -351,10 +353,10 @@ class half_trap(trap):
 	(abs(self.df.iloc[n, 3]) >= 1.0e-7 or abs(self.df.iloc[n, 4]) >= 1.0e-7) 
 
 
-	def hit_electrodes(x, y):
-    	x = abs(x)
-    	n = self.get_row_index(x, y)
-    	return (abs(self.df.iloc[n, 3]) <= 1.0e-7 or\
-            	abs(self.df.iloc[n, 4]) <= 1.0e-7) 
+	def hit_electrodes(self, x, y):
+		x = abs(x)
+		n = self.get_row_index(x, y)
+		return (abs(self.df.iloc[n, 3]) <= 1.0e-7 or\
+			abs(self.df.iloc[n, 4]) <= 1.0e-7) 
 
 	
