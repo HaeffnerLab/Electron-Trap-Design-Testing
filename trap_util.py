@@ -37,7 +37,7 @@ class trap:
 	        y = self.y_min
 	    i = int((x - self.x_min) / self.dx)
 	    j = int((y - self.y_min) / self.dy)
-	    return i * (self.Nx + 1) + j
+	    return i * (self.Ny + 1) + j
 
 	def grad_Ex(self, x, y):
 	    # return the gradient of x component of electric field at position (x, y);
@@ -136,6 +136,31 @@ class trap:
 	        t += dt
 	    return trapped
 
+	def traj(self, rou, phi, v, theta, dt, t_max):
+		# Input the initial condition, output a list of three lists,
+		# the first one is a list of time stamps, the second and third
+		# are lists of x, y coordinates of the particle at the time stamps
+	    electron_pos=np.array([rou*np.cos(phi), rou*np.sin(phi)])
+	    electron_vel = np.array([v*np.cos(theta), v*np.sin(theta)])
+	    state = np.array([electron_pos, electron_vel])
+	    t = 0.0 # the time variable
+	    trapped = True
+	    x_traj, y_traj, t_s = [], [], []
+	    # actual simulation
+	    while t < t_max:
+	        x, y = state[0]
+	        if not self.within_boundary(x, y):
+	            trapped = False
+	            print("Out of bound")
+	            break
+	        x_traj.append(x)
+	        y_traj.append(y)
+	        t_s.append(t)
+	        state = self.rk4(state, t, dt, self.E_field_sim)
+	        t += dt
+	    return [t_s, x_traj, y_traj]
+
+
 	def Boltzmann_sim(self, N_ion_samples, T, dt, t_max, FWHM):
 	    # Simulate ion in the trap with initial condition characterized by a 
 	    # Boltzmann distribution of temperature T. The simulation (using RK4) step size 
@@ -198,7 +223,7 @@ class quarter_trap(trap):
 	        y = self.y_min
 	    i = int((x - self.x_min) / self.dx)
 	    j = int((y - self.y_min) / self.dy)
-	    return i * (self.Nx + 1) + j
+	    return i * (self.Ny + 1) + j
 
 	def grad_Ex(self, x, y):
 	    # return the gradient of x component of electric field at position (x, y);
@@ -289,7 +314,7 @@ class half_trap(trap):
 	        y = self.y_min
 	    i = int((x - self.x_min) / self.dx)
 	    j = int((y - self.y_min) / self.dy)
-	    return i * (self.Nx + 1) + j
+	    return i * (self.Ny + 1) + j
 
 	def grad_Ex(self, x, y):
 	    # return the gradient of x component of electric field at position (x, y);
