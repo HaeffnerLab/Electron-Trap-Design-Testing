@@ -169,6 +169,8 @@ class trap:
 	    # the function returns a list of length N_ion_sample. 
 	    # The ith element of the list is 1 iff the ith ion is successfully trapped and is 0 if 
 	    # the ion escaped.
+	    m = self.m
+	    kB = self.kB
 	    class Boltzmann(stats.rv_continuous):
 	        def _pdf(self, v):
 	            return m*v*np.exp((-1/2*m*v**2)/(kB*T))/(kB*T)
