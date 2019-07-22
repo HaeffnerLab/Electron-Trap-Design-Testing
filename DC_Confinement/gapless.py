@@ -161,7 +161,7 @@ class Electrode():
             old_voltage = self.voltage
             self.set_voltage(1.0)
         except:
-            print "no old voltage set"
+            print ("no old voltage set")
 
         self.taylor_dict = {}
 
@@ -191,7 +191,7 @@ class Electrode():
             # now restore the old voltage
             self.set_voltage(old_voltage)
         except:
-            print "no old voltage set"
+            print ("no old voltage set")
 
 
     def expand_in_multipoles( self, r, r0 = 1):
