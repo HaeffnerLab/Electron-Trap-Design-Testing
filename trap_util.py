@@ -11,9 +11,8 @@ class trap:
 	m = 9.10938356e-31 #kg (electron)
 	#m = 6.6359437706294e-26 #(calcium)
 	kB = 1.38064852e-23 # J/K
-	f = 1.5e9 # Electrode frequency, in Hertz
 
-	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy):
+	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy, f):
 		self.df = df
 		self.x_max = x_max
 		self.x_min = x_min
@@ -23,6 +22,7 @@ class trap:
 		self.Ny = Ny
 		self.dx = dx
 		self.dy = dy
+		self.f = f
 
 	def get_row_index(self, x, y):
 	    # given spatial coordinates x and y, 
@@ -199,7 +199,7 @@ class trap:
 
 class quarter_trap(trap):
 	
-	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy, f=trap.f):
+	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy, f):
 		self.df = df
 		self.x_max = x_max
 		self.x_min = x_min
@@ -290,7 +290,7 @@ class quarter_trap(trap):
 
 class half_trap(trap):
 	
-	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy, f=trap.f):
+	def __init__(self, df, x_max, x_min, y_max, y_min, Nx, Ny, dx, dy, f):
 		self.df = df
 		self.x_max = x_max
 		self.x_min = x_min
