@@ -1,0 +1,3 @@
+This folder contains a trap_util.py file that provides basic particle trajectory simulation functions, an example of using trap_util.py (trap_util_example.ipynb), some electric field data .fld files given by finite element simulatio (these files are used in particle trajectory simulations), and some particle simulation files for ion traps and electron traps.
+
+If you want to use particle simulation code, all you need to read is trap_util.py and trap_util.ipynb. 
