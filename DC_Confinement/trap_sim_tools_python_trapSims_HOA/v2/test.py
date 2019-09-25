@@ -1,20 +1,4 @@
-import numpy as np
-
-nx = 4
-ny = 4
-nz = 4
-
-X = np.arange(nx)
-Y = np.arange(ny)
-Z = np.arange(nz)
-
-x,y,z = np.zeros((nx,ny, nz)),np.zeros((nx,ny, nz)), np.zeros((nx,ny,nz))
-for i in range(nx):
-    for j in range(ny):
-        for k in range(nz):
-            x[i,j,k] = X[i]
-            y[i,j,k] = Y[j]
-            z[i, j, k] = Z[k]
-
-x = np.ravel(x, order='F')
-print x
+import sys
+sys.path.append("..") # Adds higher directory to python modules path.
+sys.path.append("~/Users/timothyguo/Desktop/Haeffner\ Group/Trap\ Design\ Testing/DC_Confinement/trap_sim_tools_python_trapSims_HOA/v2/expansion.py") # Adds higher directory to python modules path.
+import expansion as ep

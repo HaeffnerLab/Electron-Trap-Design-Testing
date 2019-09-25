@@ -5,7 +5,6 @@ import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
 from scipy import stats
 import time
-from scipy.interpolate import RectBivariateSpline
 
 # Defining physical constants for electron trap. 
 # Remember to change q and m when you change particle type.
@@ -87,16 +86,6 @@ class trap:
 		self.q = q
 		self.m = m
 		self.kB = kB
-		x = self.df['x'].values
-		y = self.df['y'].values
-		Ex = self.df['Ex'].values
-		Ex_matrix = Ex.reshape(Nx+1, Ny+1)
-		Ey = self.df['Ey'].values
-		Ey_matrix = Ey.reshape(Nx+1, Ny+1)
-		x_arr = np.linspace(self.x_min, self.x_max, self.Nx+1)
-		y_arr = np.linspace(self.y_min, self.y_max, self.Ny+1)
-		self.intp_Ex = RectBivariateSpline(x_arr, y_arr, Ex_matrix, kx=1, ky=1)
-		self.intp_Ey = RectBivariateSpline(x_arr, y_arr, Ey_matrix, kx=1, ky=1)
 
 	def get_row_index(self, x, y):
 	    """ Given spatial coordinates x and y, return the dataframe roew index of 
@@ -113,20 +102,56 @@ class trap:
 	    j = int((y - self.y_min) / self.dy)
 	    return i * (self.Ny + 1) + j
 
+	def grad_Ex(self, x, y):
+	    """Returns the gradient of x component of electric field at position (x, y);
+	    this method is used to interpolate E field between grid points;
+	    note that x, y are supposed to be on grid intersections
+	    """
+	    n = self.get_row_index(x, y)
+	    if x == self.x_max:
+	        nx = self.get_row_index(x-self.dx, y)
+	        x_deriv = (self.df.iloc[n,3] - self.df.iloc[nx,3])/(self.dx)
+	    else:
+	        nx = self.get_row_index(x+self.dx, y)
+	        x_deriv = (self.df.iloc[nx,3] - self.df.iloc[n,3])/(self.dx)
+	    if y == self.y_max:
+	        ny = self.get_row_index(x, y-self.dy)
+	        y_deriv = (self.df.iloc[n,3] - self.df.iloc[ny,3])/(self.dy)
+	    else:
+	        ny = self.get_row_index(x, y+self.dy)
+	        y_deriv = (self.df.iloc[ny,3] - self.df.iloc[n,3])/(self.dy)
+	    return (x_deriv, y_deriv)
+
+	def grad_Ey(self, x, y):
+	    """Returns the gradient of x component of electric field at position (x, y);
+	    used to interpolate E field between grid points;
+	    note that x, y are supposed to be on grid intersections
+	    """
+	    n = self.get_row_index(x, y)
+	    if x == self.x_max:
+	        nx = self.get_row_index(x-self.dx, y)
+	        x_deriv = (self.df.iloc[n,4] - self.df.iloc[nx,4])/(self.dx)
+	    else:
+	        nx = self.get_row_index(x+self.dx, y)
+	        x_deriv = (self.df.iloc[nx,4] - self.df.iloc[n,4])/(self.dx)
+	    if y == self.y_max:
+	        ny = self.get_row_index(x, y-self.dy)
+	        y_deriv = (self.df.iloc[n,4] - self.df.iloc[ny,4])/(self.dy)
+	    else:
+	        ny = self.get_row_index(x, y+self.dy)
+	        y_deriv = (self.df.iloc[ny,4] - self.df.iloc[n,4])/(self.dy)
+	    return (x_deriv, y_deriv)
+
+
 	def E_field(self, x, y, t):
 	    """Returns the electric field at position (x, y) at time t; the x, y coordinates
 	    don't need to fall on an exact grid point (it can be between two grid points)
 	    """
-	    if x > self.x_max:
-	        x = self.x_max
-	    if x < self.x_min:
-	        x = self.x_min
-	    if y > self.y_max:
-	        y = self.y_max
-	    if y < self.y_min:
-	        y = self.y_min
-	    Ex = self.intp_Ex(x, y)[0][0]
-	    Ey = self.intp_Ey(x, y)[0][0]
+	    n = self.get_row_index(x, y)
+	    x0, y0 = self.df.iloc[n, 0], self.df.iloc[n, 1]
+	    Ex0, Ey0 = self.df.iloc[n, 3], self.df.iloc[n, 4]
+	    Ex = Ex0 + self.grad_Ex(x0, y0)[0] * (x-x0) + self.grad_Ex(x0, y0)[1] * (y-y0)
+	    Ey = Ey0 + self.grad_Ey(x0, y0)[0] * (x-x0) + self.grad_Ey(x0, y0)[1] * (y-y0)
 	    return (Ex*np.cos(2*np.pi*self.f*t), Ey*np.cos(2*np.pi*self.f*t))
 
 	def acceleration(self, x, y, t):
@@ -405,30 +430,66 @@ class quarter_trap(trap):
 		self.q = q
 		self.m = m
 		self.kB = kB
-		x = self.df['x'].values
-		y = self.df['y'].values
-		Ex = self.df['Ex'].values
-		Ex_matrix = Ex.reshape(Nx+1, Ny+1)
-		Ey = self.df['Ey'].values
-		Ey_matrix = Ey.reshape(Nx+1, Ny+1)
-		x_arr = np.linspace(self.x_min, self.x_max, self.Nx+1)
-		y_arr = np.linspace(self.y_min, self.y_max, self.Ny+1)
-		self.intp_Ex = RectBivariateSpline(x_arr, y_arr, Ex_matrix, kx=1, ky=1)
-		self.intp_Ey = RectBivariateSpline(x_arr, y_arr, Ey_matrix, kx=1, ky=1)
+
+	def get_row_index(self, x, y):
+	   	"""for documentation, see the method with the same name under class trap"""
+	   	if x > self.x_max:
+	   		x = self.x_max
+	   	if x < self.x_min:
+	   		x = self.x_min
+	   	if y > self.y_max:
+	   		y = self.y_max
+	   	if y < self.y_min:
+	   		y = self.y_min
+	   	i = int((x - self.x_min) / self.dx)
+	   	j = int((y - self.y_min) / self.dy)
+	   	return i * (self.Ny + 1) + j
+
+	def grad_Ex(self, x, y):
+	    """for documentation, see the method with the same name under class trap"""
+	    x, y = abs(x), abs(y)
+	    n = self.get_row_index(x, y)
+	    if x == self.x_max:
+	        nx = self.get_row_index(x-self.dx, y)
+	        x_deriv = (self.df.iloc[n,3] - self.df.iloc[nx,3])/(self.dx)
+	    else:
+	        nx = self.get_row_index(x+self.dx, y)
+	        x_deriv = (self.df.iloc[nx,3] - self.df.iloc[n,3])/(self.dx)
+	    if y == self.y_max:
+	        ny = self.get_row_index(x, y-self.dy)
+	        y_deriv = (self.df.iloc[n,3] - self.df.iloc[ny,3])/(self.dy)
+	    else:
+	        ny = self.get_row_index(x, y+self.dy)
+	        y_deriv = (self.df.iloc[ny,3] - self.df.iloc[n,3])/(self.dy)
+	    return (x_deriv, y_deriv)
+
+	def grad_Ey(self, x, y):
+	    """for documentation, see the method with the same name under class trap"""
+	    x, y = abs(x), abs(y)
+	    n = self.get_row_index(x, y)
+	    if x == self.x_max:
+	        nx = self.get_row_index(x-self.dx, y)
+	        x_deriv = (self.df.iloc[n,4] - self.df.iloc[nx,4])/(self.dx)
+	    else:
+	        nx = self.get_row_index(x+self.dx, y)
+	        x_deriv = (self.df.iloc[nx,4] - self.df.iloc[n,4])/(self.dx)
+	    if y == self.y_max:
+	        ny = self.get_row_index(x, y-self.dy)
+	        y_deriv = (self.df.iloc[n,4] - self.df.iloc[ny,4])/(self.dy)
+	    else:
+	        ny = self.get_row_index(x, y+self.dy)
+	        y_deriv = (self.df.iloc[ny,4] - self.df.iloc[n,4])/(self.dy)
+	    return (x_deriv, y_deriv)
+
 
 	def E_field(self, x, y, t):
 	    """for documentation, see the method with the same name under class trap"""
 	    x, y = abs(x), abs(y)
-	    if x > self.x_max:
-	        x = self.x_max
-	    if x < self.x_min:
-	        x = self.x_min
-	    if y > self.y_max:
-	        y = self.y_max
-	    if y < self.y_min:
-	        y = self.y_min
-	    Ex = self.intp_Ex(x, y)[0][0]
-	    Ey = self.intp_Ey(x, y)[0][0]
+	    n = self.get_row_index(x, y)
+	    x0, y0 = self.df.iloc[n, 0], self.df.iloc[n, 1]
+	    Ex0, Ey0 = self.df.iloc[n, 3], self.df.iloc[n, 4]
+	    Ex = Ex0 + self.grad_Ex(x0, y0)[0] * (x-x0) + self.grad_Ex(x0, y0)[1] * (y-y0)
+	    Ey = Ey0 + self.grad_Ey(x0, y0)[0] * (x-x0) + self.grad_Ey(x0, y0)[1] * (y-y0)
 	    return (Ex*np.cos(2*np.pi*self.f*t), Ey*np.cos(2*np.pi*self.f*t))
 
 	def within_boundary(self, x, y):
@@ -467,21 +528,9 @@ class half_trap(trap):
 		self.q = q
 		self.m = m
 		self.kB = kB
-		x = self.df['x'].values
-		y = self.df['y'].values
-		Ex = self.df['Ex'].values
-		Ex_matrix = Ex.reshape(Nx+1, Ny+1)
-		Ey = self.df['Ey'].values
-		Ey_matrix = Ey.reshape(Nx+1, Ny+1)
-		x_arr = np.linspace(self.x_min, self.x_max, self.Nx+1)
-		y_arr = np.linspace(self.y_min, self.y_max, self.Ny+1)
-		self.intp_Ex = RectBivariateSpline(x_arr, y_arr, Ex_matrix, kx=1, ky=1)
-		self.intp_Ey = RectBivariateSpline(x_arr, y_arr, Ey_matrix, kx=1, ky=1)
 
-	
-	def E_field(self, x, y, t):
+	def get_row_index(self, x, y):
 	    """for documentation, see the method with the same name under class trap"""
-	    x = abs(x)
 	    if x > self.x_max:
 	        x = self.x_max
 	    if x < self.x_min:
@@ -490,8 +539,55 @@ class half_trap(trap):
 	        y = self.y_max
 	    if y < self.y_min:
 	        y = self.y_min
-	    Ex = self.intp_Ex(x, y)[0][0]
-	    Ey = self.intp_Ey(x, y)[0][0]
+	    i = int((x - self.x_min) / self.dx)
+	    j = int((y - self.y_min) / self.dy)
+	    return i * (self.Ny + 1) + j
+
+	def grad_Ex(self, x, y):
+	    """for documentation, see the method with the same name under class trap"""
+	    x = abs(x)
+	    n = self.get_row_index(x, y)
+	    if x == self.x_max:
+	        nx = self.get_row_index(x-self.dx, y)
+	        x_deriv = (self.df.iloc[n,3] - self.df.iloc[nx,3])/(self.dx)
+	    else:
+	        nx = self.get_row_index(x+self.dx, y)
+	        x_deriv = (self.df.iloc[nx,3] - self.df.iloc[n,3])/(self.dx)
+	    if y == self.y_max:
+	        ny = self.get_row_index(x, y-self.dy)
+	        y_deriv = (self.df.iloc[n,3] - self.df.iloc[ny,3])/(self.dy)
+	    else:
+	        ny = self.get_row_index(x, y+self.dy)
+	        y_deriv = (self.df.iloc[ny,3] - self.df.iloc[n,3])/(self.dy)
+	    return (x_deriv, y_deriv)
+
+	def grad_Ey(self, x, y):
+	    """for documentation, see the method with the same name under class trap"""
+	    x = abs(x)
+	    n = self.get_row_index(x, y)
+	    if x == self.x_max:
+	        nx = self.get_row_index(x-self.dx, y)
+	        x_deriv = (self.df.iloc[n,4] - self.df.iloc[nx,4])/(self.dx)
+	    else:
+	        nx = self.get_row_index(x+self.dx, y)
+	        x_deriv = (self.df.iloc[nx,4] - self.df.iloc[n,4])/(self.dx)
+	    if y == self.y_max:
+	        ny = self.get_row_index(x, y-self.dy)
+	        y_deriv = (self.df.iloc[n,4] - self.df.iloc[ny,4])/(self.dy)
+	    else:
+	        ny = self.get_row_index(x, y+self.dy)
+	        y_deriv = (self.df.iloc[ny,4] - self.df.iloc[n,4])/(self.dy)
+	    return (x_deriv, y_deriv)
+
+
+	def E_field(self, x, y, t):
+	    """for documentation, see the method with the same name under class trap"""
+	    x = abs(x)
+	    n = self.get_row_index(x, y)
+	    x0, y0 = self.df.iloc[n, 0], self.df.iloc[n, 1]
+	    Ex0, Ey0 = self.df.iloc[n, 3], self.df.iloc[n, 4]
+	    Ex = Ex0 + self.grad_Ex(x0, y0)[0] * (x-x0) + self.grad_Ex(x0, y0)[1] * (y-y0)
+	    Ey = Ey0 + self.grad_Ey(x0, y0)[0] * (x-x0) + self.grad_Ey(x0, y0)[1] * (y-y0)
 	    return (Ex*np.cos(2*np.pi*self.f*t), Ey*np.cos(2*np.pi*self.f*t))
 
 
