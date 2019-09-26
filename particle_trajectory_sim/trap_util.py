@@ -418,8 +418,13 @@ class quarter_trap(trap):
 
 	def E_field(self, x, y, t):
 	    """for documentation, see the method with the same name under class trap"""
-	    x_real, y_real = x, y
-	    x, y = abs(x), abs(y)
+	    coeff_x, coeff_y = 1, 1
+	    if x < 0:
+	    	x = -x
+	    	coeff_x = -1
+	    if y < 0:
+	    	y = -y
+	    	coeff_y = -1
 	    if x > self.x_max:
 	        x = self.x_max
 	    if x < self.x_min:
@@ -428,8 +433,8 @@ class quarter_trap(trap):
 	        y = self.y_max
 	    if y < self.y_min:
 	        y = self.y_min
-	    Ex = self.intp_Ex(x, y)[0][0] * (x_real/x)
-	    Ey = self.intp_Ey(x, y)[0][0] * (y_real/y)
+	    Ex = self.intp_Ex(x, y)[0][0] * coeff_x
+	    Ey = self.intp_Ey(x, y)[0][0] * coeff_y
 	    return (Ex*np.cos(2*np.pi*self.f*t), Ey*np.cos(2*np.pi*self.f*t))
 
 	def within_boundary(self, x, y):
@@ -482,8 +487,10 @@ class half_trap(trap):
 	
 	def E_field(self, x, y, t):
 	    """for documentation, see the method with the same name under class trap"""
-	    x_real = x
-	    x = abs(x)
+	    coeff_x = 1
+	    if x < 0:
+	    	x = -x
+	    	coeff_x = -1
 	    if x > self.x_max:
 	        x = self.x_max
 	    if x < self.x_min:
@@ -492,7 +499,7 @@ class half_trap(trap):
 	        y = self.y_max
 	    if y < self.y_min:
 	        y = self.y_min
-	    Ex = self.intp_Ex(x, y)[0][0] * x_real/x
+	    Ex = self.intp_Ex(x, y)[0][0] * coeff_x
 	    Ey = self.intp_Ey(x, y)[0][0]
 	    return (Ex*np.cos(2*np.pi*self.f*t), Ey*np.cos(2*np.pi*self.f*t))
 
